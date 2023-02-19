@@ -39,7 +39,7 @@ id_viewed = ''
 for id_article in id_list:
     # print(f'\n{id_article}\n')
     if id_article != id_viewed:
-        print(f'\n{id_article}\n')
+        # print(f'\n{id_article}\n')
         article = soup.find(id=id_article)
         id_viewed = id_article
     print(article)
