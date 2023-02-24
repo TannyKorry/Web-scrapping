@@ -1,37 +1,36 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import pprint
+import json
+from fake_headers import Headers
 
-url = 'https://habr.com/ru/all/'
 
-KEYWORDS = ['дизайн', 'фото', 'web', 'python']
+def get_head():
+    headers = Headers(browser='yandex', os='win')
+    return headers.generate()
 
-resp = requests.get(url)
+url = 'https://spb.hh.ru/search/vacancy?text=python&area=1&area=2'
+
+KEYWORDS = ['Django', 'Flask']
+# Записать в json информацию о каждой вакансии - ссылка, вилка зп, название компании, город.
+resp = requests.get(url, headers=get_head())
 response = resp.text
 
 soup = BeautifulSoup(response, features='lxml')
 
-pattern =r'\d{6}\b'
+vacancy_list = soup.find_all('div', class_='serp-item')
+suitable_vacancies = {}
+for vacancy in vacancy_list:
+    link = vacancy.find('a')['href']
+    salarys = vacancy.find('span', class_='bloko-header-section-3')
+    if salarys == None:
+        df = 'не указана'
+    else:
+        df = salarys.text
+        # print(f'\n{vacancy}\n{link}\n{salary}\n')
+    print(f'\nЗарплата: {df}, ссылка: {link}\n')
 
-ID_list = re.findall(pattern, response)
-
-id_viewed = ''
-for id_article in ID_list:
-    if id_article != id_viewed:
-        article = soup.find(id=id_article)
-        id_viewed = id_article
-        if article != None:
-            span = article.find(str(id_article)+'/"><span>')
-            print(f'\n{span}\n')
-        df = span.text
-        data, header, link = '','',''
-        for kw in KEYWORDS:
-            for art in df:
-                if kw in art:
-                    print(f'{data} - {header} - {link})
-# print(df)
-
-
-
-
+# company = vacancy.find('a')['<!-- -->']
+    # print(f'\n{salary}\n')
 
