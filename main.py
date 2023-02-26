@@ -4,6 +4,7 @@ from pprint import pprint
 import json
 from fake_headers import Headers
 import os
+import re
 
 
 def get_head():
@@ -14,23 +15,22 @@ def get_head():
 path = os.path.join(os.getcwd())
 full_path = os.path.join(path, 'vacancy.json')
 
-for page in range(0, 2):
+suitable_vacancies = {}
+for page in range(0, 20):
     url = 'https://spb.hh.ru/search/vacancy?text=python&area=1&area=2&page=' + str(page)
-
-    KEYWORDS = ['Django', 'Flask']
 
     resp = requests.get(url, headers=get_head())
     resp.raise_for_status()
-    for resp.status_code in range(200, 300):
+    if resp.status_code in range(200, 300):
         response = resp.text
 
         soup = BeautifulSoup(response, features='lxml')
 
         vacancy_list = soup.find_all('div', class_='serp-item')
 
-        suitable_vacancies = {}
         for serp in vacancy_list:
             vacancy = serp.find('a').text # Название профессии
+            KEYWORDS = ['Flask', 'Django']
             for k in KEYWORDS: # Цикл ключевым по словам
                 if k in vacancy:
                     suitable_vacancies[vacancy] = []
@@ -43,16 +43,22 @@ for page in range(0, 2):
                     else:
                         sum_ = salary.text
 
-                    suitable_vacancies[vacancy].append({'Компания': employer, 'Город': city, 'Зарплата': sum_, 'Ссылка': link})
+                    pattern_sum = r'(\d+)(\s)(\d{3})'
+                    pattern_com = r'([О]+)(\s)(\w+)'
+                    substitution = r'\1 \3'
+                    summa = re.sub(pattern_sum, substitution, sum_)
+                    company = re.sub(pattern_com, substitution, employer)
 
-        pprint(suitable_vacancies)
+                    suitable_vacancies[vacancy].append({'Компания': company, 'Город': city, 'Зарплата': summa, 'Ссылка': link})
+
+        # pprint(suitable_vacancies)
         with open(full_path, "w") as f:
           json.dump(suitable_vacancies, f, indent=5)
 
 
 
-#
-# with open('vacancy.txt', 'r', encoding='utf8') as f:
+
+# with open('vacancy.json', 'r' ) as f:
 #     rows = json.load(f)
-#     contacts_list = list(rows)  # дает список списков из файла
-# print(rows)
+#
+# pprint(rows)
